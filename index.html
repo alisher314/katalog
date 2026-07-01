@@ -2,281 +2,26 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>korobka.uz</title>
+    <!-- Tailwind CSS (V4) -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="bg-white text-[#4A5056] antialiased font-sans pb-28" x-data="catalogApp()">
-
-    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-[#C2A473]/20">
-        <div class="max-w-lg mx-auto px-4 py-4 flex justify-between items-center">
-            <span class="text-xl font-black tracking-tight text-[#A88B5B]">
-                 korobka.uz
-            </span>
-            <span class="text-xs bg-[#C2A473]/10 text-[#A88B5B] font-bold px-2.5 py-1 rounded-lg border border-[#C2A473]/30" 
-                  x-text="getTabName()">
-            </span>
-        </div>
-    </header>
-
-    <div x-show="currentTab === 'catalog' && activeCategory !== 'all'" class="bg-[#C2A473]/5 border-b border-[#C2A473]/20 py-2">
-        <div class="max-w-lg mx-auto px-4 flex justify-between items-center text-xs">
-            <span class="text-[#4A5056] font-medium">
-                Выбрано: <span class="text-[#A88B5B] font-bold" x-text="getCategoryName(activeCategory)"></span>
-            </span>
-            <button @click="activeCategory = 'all'" class="text-[#A88B5B] hover:text-[#A88B5B] font-bold underline">
-                Показать все товары
-            </button>
-        </div>
-    </div>
-
-    <div x-show="currentTab === 'catalog'">
-        <main class="max-w-lg mx-auto px-4 mt-4">
-            <div class="grid grid-cols-2 gap-3">
-                <template x-for="product in filteredProducts()" :key="product.id">
-                    <div @click="product.inStock !== false && openLightbox(product)" 
-                         :class="product.inStock === false ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:shadow-md'"
-                         class="bg-white rounded-2xl border border-gray-200 p-3 flex flex-col justify-between transition-all duration-200">
-                        
-                        <div class="w-full aspect-square bg-gray-50 rounded-xl mb-3 overflow-hidden flex items-center justify-center relative border border-gray-100">
-                            
-                            <template x-if="isImageFile(product.image)">
-                                <img :src="product.image" :alt="product.name" class="w-full h-full object-cover">
-                            </template>
-                            
-                            <template x-if="!isImageFile(product.image)">
-                                <span class="text-4xl" x-text="product.image || '📦'"></span>
-                            </template>
-
-                            <template x-if="product.inStock === false">
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                    <span class="bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md shadow-xs">
-                                        Нет в наличии
-                                    </span>
-                                </div>
-                            </template>
-                        </div>
-                        
-                        <div class="flex-1 flex flex-col justify-between">
-                            <div>
-                                <h3 class="font-bold text-[#4A5056] text-[15px] leading-tight mb-1" x-text="product.name"></h3>
-                                <p class="text-[11px] text-gray-400 line-clamp-2 mb-3" x-text="product.description"></p>
-                            </div>
-                            
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="inline-block bg-[#C2A473]/10 text-[#A88B5B] text-xs font-black px-3 py-1.5 rounded-xl border border-[#C2A473]/30" x-text="formatPrice(product.price)"></span>
-                                
-                                <template x-if="product.inStock !== false">
-                                    <button @click.stop="addToCart(product)" class="w-8 h-8 bg-[#C2A473]/10 hover:bg-[#C2A473]/20 active:scale-90 text-[#A88B5B] rounded-lg flex items-center justify-center transition-all border border-[#C2A473]/20 shrink-0">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                                    </button>
-                                </template>
-
-                                <template x-if="product.inStock === false">
-                                    <button disabled class="w-8 h-8 bg-gray-100 text-gray-400 rounded-lg flex items-center justify-center border border-gray-200 shrink-0 cursor-not-allowed">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </main>
-    </div>
-
-    <div x-show="currentTab === 'categories'" style="display: none;" x-transition>
-        <main class="max-w-lg mx-auto px-4 mt-4">
-            <div class="flex flex-col gap-3">
-                <div @click="selectCategory('all')" class="bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all hover:border-[#C2A473]">
-                    <div class="flex items-center gap-4">
-                        <span class="text-3xl bg-[#C2A473]/10 p-2.5 rounded-xl flex items-center justify-center w-14 h-14">🛍️</span>
-                        <div>
-                            <h3 class="font-bold text-[#4A5056] text-md">Все товары</h3>
-                            <p class="text-xs text-gray-400 mt-0.5" x-text="'Всего позиций: ' + products.length"></p>
-                        </div>
-                    </div>
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
-
-                <template x-for="cat in categories" :key="cat.id">
-                    <div @click="selectCategory(cat.id)" class="bg-white border border-gray-200 p-4 rounded-2xl flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all hover:border-[#C2A473]">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 bg-[#C2A473]/10 rounded-xl overflow-hidden flex items-center justify-center text-3xl">
-                                <template x-if="isImageFile(cat.icon)">
-                                    <img :src="cat.icon" :alt="cat.name" class="w-full h-full object-cover">
-                                </template>
-                                <template x-if="!isImageFile(cat.icon)">
-                                    <span x-text="cat.icon || '📦'"></span>
-                                </template>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-[#4A5056] text-md" x-text="cat.name"></h3>
-                                <p class="text-xs text-gray-400 mt-0.5" x-text="'Товаров: ' + products.filter(p => p.categoryId === cat.id).length"></p>
-                            </div>
-                        </div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                </template>
-            </div>
-        </main>
-    </div>
-
-    <div x-show="currentTab === 'search'" style="display: none;" x-transition>
-        <main class="max-w-lg mx-auto px-4 mt-4">
-            <div class="relative flex items-center mb-6">
-                <input type="text" 
-                       x-model="searchQuery" 
-                       placeholder="Введите название или описание..." 
-                       class="w-full bg-white border border-gray-300 rounded-xl py-3 pl-11 pr-10 text-sm focus:outline-none focus:border-[#C2A473] shadow-xs placeholder-gray-400 transition-colors">
-                <div class="absolute left-4 text-[#A88B5B]">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <button x-show="searchQuery" @click="searchQuery = ''" class="absolute right-3 text-gray-400 hover:text-gray-600 text-lg">&times;</button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3" x-show="searchQuery">
-                <template x-for="product in searchedProducts()" :key="product.id">
-                    <div @click="product.inStock !== false && openLightbox(product)" 
-                         :class="product.inStock === false ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'"
-                         class="bg-white rounded-2xl border border-gray-200 p-3 flex flex-col justify-between">
-                        <div class="w-full aspect-square bg-gray-50 rounded-xl mb-3 overflow-hidden flex items-center justify-center relative border border-gray-100">
-                            <template x-if="isImageFile(product.image)">
-                                <img :src="product.image" :alt="product.name" class="w-full h-full object-cover">
-                            </template>
-                            <template x-if="!isImageFile(product.image)">
-                                <span class="text-4xl" x-text="product.image"></span>
-                            </template>
-                            
-                            <template x-if="product.inStock === false">
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                    <span class="bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md shadow-xs">
-                                        Нет в наличии
-                                    </span>
-                                </div>
-                            </template>
-                        </div>
-                        <div class="flex-1 flex flex-col justify-between">
-                            <div>
-                                <h3 class="font-bold text-[#4A5056] text-[15px] leading-tight mb-1" x-text="product.name"></h3>
-                                <p class="text-[11px] text-gray-400 line-clamp-2 mb-2" x-text="product.description"></p>
-                            </div>
-                            
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="inline-block bg-[#C2A473]/10 text-[#A88B5B] text-xs font-black px-3 py-1.5 rounded-xl border border-[#C2A473]/30" x-text="formatPrice(product.price)"></span>
-                                
-                                <template x-if="product.inStock !== false">
-                                    <button @click.stop="addToCart(product)" class="w-8 h-8 bg-[#C2A473]/10 hover:bg-[#C2A473]/20 text-[#A88B5B] rounded-lg flex items-center justify-center border border-[#C2A473]/20 shrink-0">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                                    </button>
-                                </template>
-
-                                <template x-if="product.inStock === false">
-                                    <button disabled class="w-8 h-8 bg-gray-100 text-gray-400 rounded-lg flex items-center justify-center border border-gray-200 shrink-0 cursor-not-allowed">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </main>
-    </div>
-
-    <div x-show="currentTab === 'cart'" style="display: none;" x-transition>
-        <main class="max-w-lg mx-auto px-4 mt-4">
-            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-                <div class="p-4 space-y-3">
-                    <template x-if="cart.length === 0">
-                        <div class="text-center py-12">
-                            <span class="text-4xl block mb-2">📥</span>
-                            <p class="text-gray-400 text-sm">Ваша корзина пуста</p>
-                            <button @click="currentTab = 'catalog'" class="mt-4 inline-block text-sm bg-[#C2A473] hover:bg-[#A88B5B] text-white px-4 py-2 rounded-xl font-bold transition-colors">Перейти в каталог</button>
-                        </div>
-                    </template>
-                    <template x-for="item in cart" :key="item.product.id">
-                        <div class="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                            <div class="flex-1 pr-3">
-                                <h4 class="font-bold text-sm text-[#4A5056]" x-text="item.product.name"></h4>
-                                <p class="text-xs text-gray-400 mt-0.5" x-text="formatPrice(item.product.price)"></p>
-                            </div>
-                            <div class="flex items-center gap-2.5 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                                <button @click="updateQuantity(item.product.id, -1)" class="w-6 h-6 rounded-md bg-white flex items-center justify-center text-[#A88B5B] font-bold text-xs shadow-xs">-</button>
-                                <span class="w-5 text-center text-xs font-bold text-[#4A5056]" x-text="item.quantity"></span>
-                                <button @click="updateQuantity(item.product.id, 1)" class="w-6 h-6 rounded-md bg-white flex items-center justify-center text-[#A88B5B] font-bold text-xs shadow-xs">+</button>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="border-t border-gray-100 p-4 bg-gray-50/50" x-show="cart.length > 0">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-sm text-gray-400 font-medium">Общая стоимость:</span>
-                        <span class="text-lg font-black text-[#A88B5B]" x-text="formatPrice(cartTotal())"></span>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Текст для копирования:</label>
-                        <pre class="bg-gray-50 p-3 border border-gray-200 rounded-xl text-xs font-mono text-gray-600 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto" x-text="generateCartText()"></pre>
-                    </div>
-                    <button @click="copyToClipboard()" class="w-full bg-[#C2A473] hover:bg-[#A88B5B] text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-md">
-                        <span x-text="copyStatus"></span>
-                    </button>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <div x-show="isLightboxOpen" class="fixed inset-0 z-50 overflow-hidden flex items-center justify-center p-4" style="display: none;" x-transition>
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-xs" @click="isLightboxOpen = false"></div>
-        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-gray-100 relative z-10">
-            <button @click="isLightboxOpen = false" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center text-xl hover:bg-black/60 z-20">&times;</button>
-            <div class="w-full aspect-square bg-gray-50 flex items-center justify-center border-b border-gray-100 overflow-hidden">
-                <template x-if="isImageFile(selectedProduct?.image)">
-                    <img :src="selectedProduct.image" :alt="selectedProduct.name" class="w-full h-full object-cover">
-                </template>
-                <template x-if="!isImageFile(selectedProduct?.image)">
-                    <span class="text-8xl select-none" x-text="selectedProduct?.image"></span>
-                </template>
-            </div>
-            <div class="p-5 bg-white">
-                <h3 class="text-lg font-black text-[#4A5056] mb-1" x-text="selectedProduct?.name"></h3>
-                <p class="text-sm text-gray-400 mb-4" x-text="selectedProduct?.description"></p>
-                <div class="flex items-center justify-between mt-2">
-                    <span class="text-md font-black text-[#A88B5B] bg-[#C2A473]/10 px-3 py-1.5 rounded-xl border border-[#C2A473]/20" x-text="formatPrice(selectedProduct?.price || 0)"></span>
-                    <button @click="addToCart(selectedProduct); isLightboxOpen = false" class="bg-[#C2A473] hover:bg-[#A88B5B] text-white font-bold px-4 py-2 rounded-xl text-sm shadow-md flex items-center gap-1.5 transition-colors">
-                        <span>🛒 В корзину</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-gray-200 z-40 shadow-lg">
-        <div class="max-w-lg mx-auto px-2 py-2 flex justify-between items-center text-center gap-1">
-            <button @click="currentTab = 'catalog'" :class="currentTab === 'catalog' ? 'bg-[#C2A473] text-white shadow-xs' : 'bg-transparent text-gray-400 hover:text-[#4A5056]'" class="flex flex-col items-center justify-center gap-0.5 transition-all flex-1 py-1.5 rounded-xl">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                <span class="text-[10px] font-bold">Каталог</span>
-            </button>
-            <button @click="currentTab = 'categories'" :class="currentTab === 'categories' ? 'bg-[#C2A473] text-white shadow-xs' : 'bg-transparent text-gray-400 hover:text-[#4A5056]'" class="flex flex-col items-center justify-center gap-0.5 transition-all flex-1 py-1.5 rounded-xl">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                <span class="text-[10px] font-bold">Категории</span>
-            </button>
-            <button @click="currentTab = 'search'" :class="currentTab === 'search' ? 'bg-[#C2A473] text-white shadow-xs' : 'bg-transparent text-gray-400 hover:text-[#4A5056]'" class="flex flex-col items-center justify-center gap-0.5 transition-all flex-1 py-1.5 rounded-xl">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <span class="text-[10px] font-bold">Поиск</span>
-            </button>
-            <button @click="currentTab = 'cart'" :class="currentTab === 'cart' ? 'bg-[#C2A473] text-white shadow-xs' : 'bg-transparent text-[#4A5056] hover:text-[#A88B5B]'" class="relative flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl transition-all flex-1">
-                <div class="relative">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                    <span x-show="cartCount() > 0" x-text="cartCount()" :class="currentTab === 'cart' ? 'bg-white text-[#A88B5B]' : 'bg-[#A88B5B] text-white'" class="absolute -top-1.5 -right-2 text-[9px] w-4 h-4 rounded-md flex items-center justify-center font-black"></span>
-                </div>
-                <span class="text-[10px] font-bold" x-text="cartCount() > 0 && currentTab !== 'cart' ? formatPrice(cartTotal()) : 'Корзина'"></span>
-            </button>
-        </div>
-    </div>
-
+    <style>
+        body {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Скрытие скроллбара для карусели категорий */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
     <script>
         function catalogApp() {
             return {
@@ -288,27 +33,109 @@
                 copyStatus: '📋 Скопировать текст заказа',
                 
                 categories: [
-                    { id: 'boxes', name: 'Коробки', icon: '📦' }, 
-                    { id: 'plates', name: 'Подложки', icon: '💿' }, 
-                    { id: 'ribbons', name: 'Ленты и декор', icon: '🎗️' } 
+                    { id: 'okno', name: 'С окошком', icon: '🖼️' },
+                    { id: 'kraft_gofra', name: 'Крафт гофра', icon: '📦' },
+                    { id: 'belie_gofra', name: 'Белые гофра', icon: '⬜' },
+                    { id: 'krug_podlozhki', name: 'Круглые подложки', icon: '💿' },
+                    { id: 'kvadrat_podlozhki', name: 'Квадратные подложки', icon: '🔳' },
+                    { id: 'belie_paketi', name: 'Белые пакеты', icon: '🛍️' },
+                    { id: 'premium_paket', name: 'Премиум пакет', icon: '💎' },
+                    { id: 'gluhaia_krisha', name: 'Глухая крышка', icon: '📦' },
+                    { id: 'konfeti', name: 'Конфеты', icon: '🍬' },
+                    { id: 'pryaniki', name: 'Пряники', icon: '🍪' },
+                    { id: 'malenkie_korobki', name: 'Маленькие коробки', icon: '📥' },
+                    { id: 'turt_visokiy', name: 'Торт высокий', icon: '🎂' },
+                    { id: 'prozrachnie_krishi', name: 'Прозрачные крышки', icon: '🔍' }
                 ],
                 
                 products: [
-                    // В качестве примера второму товару выставлен статус inStock: false
-                    { id: 1, categoryId: 'plates', name: 'Подложка круглая 20см', description: 'Толщина 3мм, белого цвета, влагостойкая', price: 5000, image: 'images/20.jpg', inStock: true }, 
-                    { id: 2, categoryId: 'plates', name: 'Подложка круглая 23см', description: 'Толщина 3мм, белого цвета, влагостойкая', price: 7000, image: 'images/23.jpg', inStock: false },
-                    { id: 3, categoryId: 'plates', name: 'Подложка круглая 25см', description: 'Толщина 3мм, белого цвета, влагостойкая', price: 10000, image: 'images/25.jpg', inStock: true },
-					{ id: 4, categoryId: 'plates', name: 'Подложка круглая 26см', description: 'Толщина 3мм, белого цвета, влагостойкая', price: 10000, image: 'images/26.jpg', inStock: true },
-					{ id: 5, categoryId: 'plates', name: 'Подложка круглая 30см', description: 'Толщина 3мм, белого цвета, влагостойкая', price: 12000, image: 'images/30.jpg', inStock: true },
-					{ id: 6, categoryId: 'boxes', name: 'Коробка для торта 22х22', description: 'Самосборная, с прозрачным окном', price: 8000, image: '📦', inStock: true }, 
-                    { id: 7, categoryId: 'boxes', name: 'Коробка под капкейки х6', description: 'Крафтовый плотный картон с ложементом', price: 6500, image: '🧁', inStock: true },
-                    { id: 8, categoryId: 'ribbons', name: 'Лента атласная 2см', description: 'Премиум качество, рулон 30 метров', price: 15000, image: '🎗️', inStock: true } 
+                    { id: 1, categoryId: 'okno', name: '20х20х5 с окошком', sizeLabel: '20*20*5', price: 10000, image: 'images/20205okno.jpg', inStock: true },
+                    { id: 2, categoryId: 'okno', name: '20х20х10 цветные с окошком', sizeLabel: '20*20*10', price: 15000, image: 'images/202010cv.jpg', inStock: true },
+                    { id: 3, categoryId: 'okno', name: '20х20х10 с окошком', sizeLabel: '20*20*10', price: 12000, image: 'images/202010okno.jpg', inStock: true },
+                    { id: 4, categoryId: 'okno', name: '20х20х20 с окошком', sizeLabel: '20*20*20', price: 14000, image: 'images/202020okno.jpg', inStock: true },
+                    { id: 5, categoryId: 'okno', name: '23х23х23 с окошком', sizeLabel: '23*23*23', price: 16000, image: 'images/232323okno.jpg', inStock: true },
+                    { id: 6, categoryId: 'okno', name: '25х25х10 с окошком', sizeLabel: '25*25*10', price: 17000, image: 'images/252510okno.jpg', inStock: true },
+                    { id: 7, categoryId: 'okno', name: '25х25х25 с окошком', sizeLabel: '25*25*25', price: 17000, image: 'images/252525okno.jpg', inStock: true },
+                    { id: 8, categoryId: 'okno', name: '25х16х10 раскрывающие', sizeLabel: '25*16*10', price: 11000, image: 'images/6kapk.jpg', inStock: true },
+                    { id: 9, categoryId: 'okno', name: '28*28*15 на 9 капкейков', sizeLabel: '28*28*15', price: 17000, image: 'images/2828159kapk.jpg', inStock: true },
+                    { id: 10, categoryId: 'okno', name: '28*28*15 для муссовых тортов', sizeLabel: '28*28*15', price: 15000, image: 'images/282815.jpg', inStock: true },
+                    { id: 11, categoryId: 'okno', name: '25х35 с цветочками', sizeLabel: '25*35*12', price: 15000, image: 'images/2535cv.jpg', inStock: true },
+                    { id: 12, categoryId: 'okno', name: '35х45 с цветочками', sizeLabel: '35*45*12', price: 16000, image: 'images/3545cv.jpg', inStock: true },
+                    { id: 13, categoryId: 'okno', name: '25х35 с цветочками высота 5см', sizeLabel: '25*35*5', price: 15000, image: 'images/25355cv.jpg', inStock: true },
+                    { id: 14, categoryId: 'okno', name: '35х45 с цветочками высота 5см', sizeLabel: '35*45*5', price: 16000, image: 'images/35455cv.jpg', inStock: true },
+                    { id: 15, categoryId: 'okno', name: '35х16 Цветочки для рулета', sizeLabel: '35*16*12', price: 15000, image: 'images/351612cv.jpg', inStock: true },
+                    { id: 16, categoryId: 'okno', name: '28х22 с окошком', sizeLabel: '28*22*9', price: 15000, image: 'images/2822okno.jpg', inStock: true },
+                    { id: 17, categoryId: 'kraft_gofra', name: '20х20 крафт', sizeLabel: '20*20*10', price: 16000, image: 'images/202010kraft.jpg', inStock: true },
+                    { id: 18, categoryId: 'kraft_gofra', name: '20х30 крафт', sizeLabel: '20*30*10', price: 16000, image: 'images/203010kraft.jpg', inStock: true },
+                    { id: 19, categoryId: 'kraft_gofra', name: '30х30 крафт', sizeLabel: '30*30*10', price: 17000, image: 'images/303010kraft.jpg', inStock: true },
+                    { id: 20, categoryId: 'kraft_gofra', name: '30х40 крафт', sizeLabel: '30*40*10', price: 17000, image: 'images/304010kraft.jpg', inStock: true },
+                    { id: 21, categoryId: 'kraft_gofra', name: '35х35 крафт', sizeLabel: '35*35*10', price: 18000, image: 'images/353510kraft.jpg', inStock: true },
+                    { id: 22, categoryId: 'kraft_gofra', name: '40х40 крафт', sizeLabel: '40*40*10', price: 18000, image: 'images/404010kraft.jpg', inStock: true },
+                    { id: 23, categoryId: 'belie_gofra', name: '20х20 белые', sizeLabel: '20*20*10', price: 22000, image: 'images/202010bel.jpg', inStock: true },
+                    { id: 24, categoryId: 'belie_gofra', name: '20х30 белые', sizeLabel: '20*30*10', price: 22000, image: 'images/203010bel.jpg', inStock: true },
+                    { id: 25, categoryId: 'belie_gofra', name: '30х30 белые', sizeLabel: '30*30*10', price: 24000, image: 'images/303010bel.jpg', inStock: true },
+                    { id: 26, categoryId: 'belie_gofra', name: '30х40 белые', sizeLabel: '30*40*10', price: 24000, image: 'images/304010bel.jpg', inStock: true },
+                    { id: 27, categoryId: 'belie_gofra', name: '35х35 белые', sizeLabel: '35*35*10', price: 24000, image: 'images/353510bel.jpg', inStock: true },
+                    { id: 28, categoryId: 'belie_gofra', name: '40х40 белые', sizeLabel: '40*40*10', price: 24000, image: 'images/404010bel.jpg', inStock: true },
+                    { id: 29, categoryId: 'krug_podlozhki', name: 'Круг 20', sizeLabel: '20см', price: 5000, image: 'images/krug20.jpg', inStock: true },
+                    { id: 30, categoryId: 'krug_podlozhki', name: 'Круг 23', sizeLabel: '23см', price: 7000, image: 'images/krug23.jpg', inStock: true },
+                    { id: 31, categoryId: 'krug_podlozhki', name: 'Круг 26', sizeLabel: '26см', price: 10000, image: 'images/krug26.jpg', inStock: true },
+                    { id: 32, categoryId: 'krug_podlozhki', name: 'Круг 30', sizeLabel: '30см', price: 12000, image: 'images/krug30.jpg', inStock: true },
+                    { id: 33, categoryId: 'kvadrat_podlozhki', name: 'Квадрат 16', sizeLabel: '16*16', price: 3500, image: 'images/kvadrat16.jpg', inStock: true },
+                    { id: 34, categoryId: 'kvadrat_podlozhki', name: 'Квадрат 20', sizeLabel: '20*20', price: 5000, image: 'images/kvadrat20.jpg', inStock: true },
+                    { id: 35, categoryId: 'kvadrat_podlozhki', name: 'Квадрат 23', sizeLabel: '23*23', price: 7000, image: 'images/kvadrat23.jpg', inStock: true },
+                    { id: 36, categoryId: 'kvadrat_podlozhki', name: 'Квадрат 25', sizeLabel: '25*25', price: 9000, image: 'images/kvadrat25.jpg', inStock: true },
+                    { id: 37, categoryId: 'kvadrat_podlozhki', name: 'Квадрат 27', sizeLabel: '27*27', price: 10000, image: 'images/kvadrat27.jpg', inStock: true },
+                    { id: 38, categoryId: 'kvadrat_podlozhki', name: 'Квадрат 32', sizeLabel: '32*32', price: 12000, image: 'images/kvadrat32.jpg', inStock: true },
+                    { id: 39, categoryId: 'belie_paketi', name: 'Белый бумажный пакет 27х24', sizeLabel: '27*24*13', price: 3500, image: 'images/2824paket.jpg', inStock: true },
+                    { id: 40, categoryId: 'belie_paketi', name: 'Белый бумажный пакет 31х28', sizeLabel: '31*28*15', price: 6000, image: 'images/3128paket.jpg', inStock: true },
+                    { id: 41, categoryId: 'premium_paket', name: 'Премиум пакет 23x20', sizeLabel: '23*20*10', price: 7000, image: 'images/232010paket.jpg', inStock: true },
+                    { id: 42, categoryId: 'premium_paket', name: 'Премиум пакет 25х20', sizeLabel: '25*20*16', price: 7000, image: 'images/252016paket.jpg', inStock: true },
+                    { id: 43, categoryId: 'premium_paket', name: 'Премиум пакет 30х30х30', sizeLabel: '30*30*30', price: 18000, image: 'images/303030paket.jpg', inStock: true },
+                    { id: 44, categoryId: 'premium_paket', name: 'Премиум пакет 50х41х12', sizeLabel: '51*40*16', price: 20000, image: 'images/5140paket.jpg', inStock: true },
+                    { id: 45, categoryId: 'gluhaia_krisha', name: '20х20х10 глухая крышка', sizeLabel: '20*20*10', price: 15000, image: 'images/202010gl.jpg', inStock: true },
+                    { id: 46, categoryId: 'konfeti', name: 'Коробки на 4 конфет', sizeLabel: '10*10*3,5', price: 10000, image: 'images/4konf.jpg', inStock: true },
+                    { id: 47, categoryId: 'konfeti', name: 'Коробки на 5 конфет', sizeLabel: '23*7*4', price: 8000, image: 'images/5konf.jpg', inStock: true },
+                    { id: 48, categoryId: 'konfeti', name: 'Коробки на 9 конфет', sizeLabel: '15*15*3,5', price: 10000, image: 'images/9konf.jpg', inStock: true },
+                    { id: 49, categoryId: 'konfeti', name: 'Коробки на 12 конфет', sizeLabel: '16*14*3', price: 8000, image: 'images/12konf.jpg', inStock: true },
+                    { id: 50, categoryId: 'konfeti', name: 'Коробки на 16 конфет', sizeLabel: '18*18*3', price: 12000, image: 'images/16konf.jpg', inStock: true },
+                    { id: 51, categoryId: 'pryaniki', name: 'Коробки для пряников 16х14', sizeLabel: '16*14*3', price: 5000, image: 'images/1614.jpg', inStock: true },
+                    { id: 52, categoryId: 'pryaniki', name: 'Коробки для пряников 19х20', sizeLabel: '19*20*2,5', price: 7000, image: 'images/19203.jpg', inStock: true },
+                    { id: 53, categoryId: 'pryaniki', name: 'Бумажный бокс 18х20', sizeLabel: '18*20*7', price: 6000, image: 'images/1820.jpg', inStock: true },
+                    { id: 54, categoryId: 'pryaniki', name: 'Прозрачный куб 6х6х6', sizeLabel: '6х6х6', price: 10000, image: 'images/666.jpg', inStock: true },
+                    { id: 55, categoryId: 'pryaniki', name: 'Белые для пряников с окошком 10х10х2', sizeLabel: '10х10х1,5', price: 3000, image: 'images/10102.jpg', inStock: true },
+                    { id: 56, categoryId: 'pryaniki', name: 'Откидная крышка с окошком 12х12', sizeLabel: '12*12*3', price: 5000, image: 'images/1212.jpg', inStock: true },
+                    { id: 57, categoryId: 'malenkie_korobki', name: 'Для плиток', sizeLabel: '16*8*1,5', price: 7000, image: 'images/плитка.jpg', inStock: true },
+                    { id: 58, categoryId: 'malenkie_korobki', name: 'Коробочка с ручкой', sizeLabel: '11*11*4', price: 9000, image: 'images/11114.jpg', inStock: true },
+                    { id: 59, categoryId: 'turt_visokiy', name: 'Домики с ручкой и окошком 27', sizeLabel: '27*27*24', price: 17000, image: 'images/2727.jpg', inStock: true },
+                    { id: 60, categoryId: 'turt_visokiy', name: 'Домики с ручкой и окошком 32', sizeLabel: '32*32*25', price: 22000, image: 'images/3232.jpg', inStock: true },
+                    { id: 61, categoryId: 'turt_visokiy', name: 'Прозрачная коробока для торта 30х30х30', sizeLabel: '30*30*30', price: 25000, image: 'images/303030.jpg', inStock: true },
+                    { id: 62, categoryId: 'turt_visokiy', name: 'Прозрачный Тубус 35 высотой 35', sizeLabel: 'диам. 35, выс. 35', price: 65000, image: 'images/tubus35.jpg', inStock: true },
+                    { id: 63, categoryId: 'turt_visokiy', name: 'Прозрачный Тубус 35 высотой 55', sizeLabel: 'диам. 35, выс. 55', price: 85000, image: 'images/tubus55.jpg', inStock: true },
+                    { id: 64, categoryId: 'prozrachnie_krishi', name: 'Коробка на 1 капкейк', sizeLabel: '10*10*12', price: 10000, image: 'images/101012.jpg', inStock: true },
+                    { id: 65, categoryId: 'prozrachnie_krishi', name: 'Коробка на 2 капкейка', sizeLabel: '16*9*10', price: 7000, image: 'images/2kapk.jpg', inStock: true },
+                    { id: 66, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка 14х14х17', sizeLabel: '15*15*18', price: 12000, image: 'images/141417.jpg', inStock: true },
+                    { id: 67, categoryId: 'prozrachnie_krishi', name: 'Коробка с прозрачной крышкой 25х10х6', sizeLabel: '26*10*5', price: 12000, image: 'images/25106.jpg', inStock: true },
+                    { id: 68, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка для бенто торта 16х16х10', sizeLabel: '16*16*10', price: 10000, image: 'images/161610.jpg', inStock: true },
+                    { id: 69, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка 25*17*10', sizeLabel: '25*17*10', price: 12000, image: 'images/251610.jpg', inStock: true },
+                    { id: 70, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка на 4 капкейка', sizeLabel: '16*16*10', price: 11000, image: 'images/4kapk.jpg', inStock: true },
+                    { id: 71, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка на 6 капкейков', sizeLabel: '25*17*10', price: 13000, image: 'images/6kapk.jpg', inStock: true },
+                    { id: 72, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка для макаронс 1 ряд', sizeLabel: '22*7*5,5', price: 10000, image: 'images/2277.jpg', inStock: true },
+                    { id: 73, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка для макаронс в 2 ряда', sizeLabel: '22*13*5,5', price: 12000, image: 'images/2212.jpg', inStock: true },
+                    { id: 74, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка 20х20х20', sizeLabel: '20*20*20', price: 20000, image: 'images/202020pr.jpg', inStock: true },
+                    { id: 75, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка 25х35х12', sizeLabel: '25*35*12', price: 18000, image: 'images/253512pr.jpg', inStock: true },
+                    { id: 76, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка на 12 капкейков 25х35х12', sizeLabel: '25*35*12', price: 20000, image: 'images/12kapk.jpg', inStock: true },
+                    { id: 77, categoryId: 'prozrachnie_krishi', name: 'Прозрачная коробка 35х45х12', sizeLabel: '35*45*12', price: 22000, image: 'images/354512pr.jpg', inStock: true },
+                    { id: 78, categoryId: 'prozrachnie_krishi', name: 'Сердце прозрачное', sizeLabel: '25*25', price: 16000, image: 'images/serdcepr.jpg', inStock: true },
+                    { id: 79, categoryId: 'prozrachnie_krishi', name: 'Луна прозрачные', sizeLabel: '25*17', price: 14000, image: 'images/lunapr.jpg', inStock: true },
+                    { id: 80, categoryId: 'prozrachnie_krishi', name: '18x18x3', sizeLabel: '18x18x3', price: 10000, image: 'images/18183.jpg', inStock: true },
+                    { id: 81, categoryId: 'prozrachnie_krishi', name: '19x20 прозрачные', sizeLabel: '19*20*7', price: 12000, image: 'images/19207.jpg', inStock: true }
                 ],
                 cart: [],
 
                 isImageFile(str) {
                     if (!str) return false;
-                    return str.includes('.') || str.startsWith('http://') || str.startsWith('https://');
+                    return str.includes('.') || str.includes('/');
                 },
 
                 getTabName() {
@@ -345,7 +172,7 @@
                     if (!this.searchQuery) return [];
                     return this.products.filter(p => 
                         p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
-                        p.description.toLowerCase().includes(this.searchQuery.toLowerCase())
+                        p.sizeLabel.toLowerCase().includes(this.searchQuery.toLowerCase())
                     );
                 },
 
@@ -385,7 +212,7 @@
                     let text = "";
                     this.cart.forEach((item, index) => {
                         const totalItemPrice = item.product.price * item.quantity;
-                        text += `${item.product.name}\n`;
+                        text += `${item.product.name} (${item.product.sizeLabel})\n`;
                         text += `${item.quantity} шт х ${this.formatPrice(item.product.price)} = ${this.formatPrice(totalItemPrice)}`;
                         
                         if (index < this.cart.length - 1) {
@@ -402,7 +229,7 @@
                 copyToClipboard() {
                     const textToCopy = this.generateCartText();
                     navigator.clipboard.writeText(textToCopy).then(() => {
-                        this.copyStatus = '✅ Скопировано!';
+                        this.copyStatus = '✅ Скопировано';
                         setTimeout(() => {
                             this.copyStatus = '📋 Скопировать текст заказа';
                         }, 2000);
@@ -411,8 +238,274 @@
                         this.copyStatus = '❌ Ошибка';
                     });
                 }
-            }
+            };
         }
     </script>
+</head>
+<body class="bg-[#FBFBFD] text-[#1A1A1A] antialiased font-sans pb-32" x-data="catalogApp()">
+
+    <!-- Белый Header -->
+    <header class="bg-white/80 backdrop-blur-xl sticky top-0 z-40 border-b border-gray-100">
+        <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="text-xl font-black tracking-tight text-[#1A1A1A]">korobka.uz</span>
+                <span class="text-[9px] text-[#D4AF37] uppercase tracking-widest font-semibold mt-0.5">КАТАЛОГ ТОВАРОВ</span>
+            </div>
+            <span class="text-[11px] bg-[#D4AF37] text-white font-bold px-3 py-1.5 rounded-full" x-text="getTabName()"></span>
+        </div>
+    </header>
+
+    <!-- Плашка активного фильтра -->
+    <div x-show="currentTab === 'catalog' && activeCategory !== 'all'" style="display: none;" class="bg-gray-50 border-b border-gray-100 py-2.5">
+        <div class="max-w-md mx-auto px-5 flex justify-between items-center text-xs">
+            <span class="font-medium text-gray-500">
+                Категория: <span class="text-[#D4AF37] font-bold" x-text="getCategoryName(activeCategory)"></span>
+            </span>
+            <button @click="activeCategory = 'all'" class="text-gray-400 hover:text-[#1A1A1A] font-medium flex items-center gap-1 transition-colors">
+                Сбросить ✕
+            </button>
+        </div>
+    </div>
+
+    <!-- ВКЛАДКА: КАТАЛОГ -->
+    <div x-show="currentTab === 'catalog'">
+        
+        <!-- НОВОЕ: Горизонтальная карусель категорий на главной -->
+        <section class="max-w-md mx-auto mt-4 px-4">
+            <div class="flex gap-3 overflow-x-auto no-scrollbar py-2 scroll-smooth snap-x">
+                
+                <!-- Кнопка "Все" в начале карусели -->
+                <div @click="activeCategory = 'all'" 
+                     :class="activeCategory === 'all' ? 'border-[#D4AF37] bg-white shadow-[0_4px_12px_rgba(212,175,55,0.1)] scale-102' : 'border-gray-100 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.01)]'"
+                     class="flex items-center gap-2 px-4 py-2.5 rounded-xl border cursor-pointer transition-all snap-start shrink-0 select-none active:scale-95">
+                    <span class="text-base">🛍️</span>
+                    <span class="text-xs font-bold whitespace-nowrap" :class="activeCategory === 'all' ? 'text-[#D4AF37]' : 'text-[#1A1A1A]'">Все</span>
+                </div>
+
+                <!-- Элементы категорий -->
+                <template x-for="cat in categories" :key="cat.id">
+                    <div @click="selectCategory(cat.id)" 
+                         :class="activeCategory === cat.id ? 'border-[#D4AF37] bg-white shadow-[0_4px_12px_rgba(212,175,55,0.1)] scale-102' : 'border-gray-100 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.01)]'"
+                         class="flex items-center gap-2 px-4 py-2.5 rounded-xl border cursor-pointer transition-all snap-start shrink-0 select-none active:scale-95">
+                        <span class="text-base" x-text="cat.icon || '📦'"></span>
+                        <span class="text-xs font-bold whitespace-nowrap" :class="activeCategory === cat.id ? 'text-[#D4AF37]' : 'text-[#1A1A1A]'" x-text="cat.name"></span>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- Список товаров -->
+        <main class="max-w-md mx-auto px-4 mt-4">
+            <div class="grid grid-cols-2 gap-3">
+                <template x-for="product in filteredProducts()" :key="product.id">
+                    <div @click="product.inStock !== false && openLightbox(product)" 
+                         :class="product.inStock === false ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-[#D4AF37]/40 hover:shadow-[0_12px_30px_rgba(212,175,55,0.06)]'"
+                         class="bg-white rounded-2xl border border-gray-100 p-3 flex flex-col justify-between transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.015)] select-none">
+                        
+                        <div class="w-full aspect-square bg-[#F8F9FA] rounded-xl mb-3 overflow-hidden flex items-center justify-center relative">
+                            <template x-if="isImageFile(product.image)">
+                                <img :src="product.image" :alt="product.name" class="w-full h-full object-cover transition-transform duration-500 hover:scale-103" loading="lazy" @error="$el.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23F1F3F5\'/><text x=\'50\' y=\'55\' font-size=\'30\' text-anchor=\'middle\'>📦</text></svg>.'">
+                            </template>
+                            <template x-if="!isImageFile(product.image)">
+                                <span class="text-3xl drop-shadow-xs" x-text="product.image || '📦'"></span>
+                            </template>
+
+                            <template x-if="product.inStock === false">
+                                <div class="absolute inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center">
+                                    <span class="bg-[#D4AF37] text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs">Ожидается</span>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-[#1A1A1A] text-[13px] leading-tight tracking-tight mb-1" x-text="product.name"></h3>
+                                <div class="inline-block bg-gray-100 text-gray-500 text-[9px] font-medium px-1.5 py-0.5 rounded-sm mb-2" x-text="product.sizeLabel"></div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between gap-1.5 mt-2">
+                                <span class="text-[13px] font-black text-[#1A1A1A] whitespace-nowrap" x-text="formatPrice(product.price)"></span>
+                                <template x-if="product.inStock !== false">
+                                    <button @click.stop="addToCart(product)" class="w-7 h-7 bg-[#D4AF37] hover:bg-[#C5A028] text-white rounded-lg flex items-center justify-center transition-all active:scale-90 shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </main>
+    </div>
+
+    <!-- ВКЛАДКА: КАТЕГОРИИ (ПОЛНЫЙ СПИСОК) -->
+    <div x-show="currentTab === 'categories'" style="display: none;" x-transition>
+        <main class="max-w-md mx-auto px-4 mt-5">
+            <div class="flex flex-col gap-2.5">
+                <div @click="selectCategory('all')" class="bg-white border border-gray-100 p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all hover:border-[#D4AF37]/30 shadow-[0_8px_24px_rgba(0,0,0,0.015)] select-none active:scale-[0.99]">
+                    <div class="flex items-center gap-4">
+                        <span class="text-xl bg-gray-50 border border-gray-100 p-3 rounded-xl flex items-center justify-center w-12 h-12">🛍️</span>
+                        <div>
+                            <h3 class="font-bold text-[#1A1A1A] text-sm tracking-tight">Все товары каталога</h3>
+                            <p class="text-[11px] text-gray-400 mt-0.5" x-text="'Общий ассортимент: ' + products.length"></p>
+                        </div>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+
+                <template x-for="cat in categories" :key="cat.id">
+                    <div @click="selectCategory(cat.id)" class="bg-white border border-gray-100 p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all hover:border-[#D4AF37]/30 shadow-[0_8px_24px_rgba(0,0,0,0.015)] select-none active:scale-[0.99]">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center text-xl">
+                                <span x-text="cat.icon || '📦'"></span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-[#1A1A1A] text-sm tracking-tight" x-text="cat.name"></h3>
+                                <p class="text-[11px] text-gray-400 mt-0.5" x-text="'Позиций: ' + products.filter(p => p.categoryId === cat.id).length"></p>
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </template>
+            </div>
+        </main>
+    </div>
+
+    <!-- ВКЛАДКА: ПОИСК -->
+    <div x-show="currentTab === 'search'" style="display: none;" x-transition>
+        <main class="max-w-md mx-auto px-4 mt-5">
+            <div class="relative flex items-center mb-5">
+                <input type="text" x-model="searchQuery" placeholder="Поиск по названию или размеру..." class="w-full bg-white border border-gray-200 rounded-xl py-3 pl-10 pr-10 text-sm focus:outline-none focus:border-[#D4AF37] shadow-[0_4px_12px_rgba(0,0,0,0.01)] placeholder-gray-400 transition-colors">
+                <div class="absolute left-3.5 text-gray-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <button x-show="searchQuery" @click="searchQuery = ''" class="absolute right-3 text-gray-400 text-lg">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3" x-show="searchQuery">
+                <template x-for="product in searchedProducts()" :key="product.id">
+                    <div @click="product.inStock !== false && openLightbox(product)" class="bg-white rounded-2xl border border-gray-100 p-3 flex flex-col justify-between shadow-[0_8px_24px_rgba(0,0,0,0.015)] select-none">
+                        <div class="w-full aspect-square bg-[#F8F9FA] rounded-xl mb-3 overflow-hidden flex items-center justify-center">
+                            <template x-if="isImageFile(product.image)">
+                                <img :src="product.image" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$el.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23F1F3F5\'/><text x=\'50\' y=\'55\' font-size=\'30\' text-anchor=\'middle\'>📦</text></svg>.'">
+                            </template>
+                            <template x-if="!isImageFile(product.image)">
+                                <span class="text-3xl" x-text="product.image"></span>
+                            </template>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-[#1A1A1A] text-[13px] leading-tight mb-1" x-text="product.name"></h3>
+                                <div class="inline-block bg-gray-100 text-gray-500 text-[9px] px-1.5 py-0.5 rounded-sm mb-2" x-text="product.sizeLabel"></div>
+                            </div>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-[13px] font-black text-[#1A1A1A]" x-text="formatPrice(product.price)"></span>
+                                <button @click.stop="addToCart(product)" class="w-7 h-7 bg-[#D4AF37] text-white rounded-lg flex items-center justify-center">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </main>
+    </div>
+
+    <!-- ВКЛАДКА: КОРЗИНА -->
+    <div x-show="currentTab === 'cart'" style="display: none;" x-transition>
+        <main class="max-w-md mx-auto px-4 mt-5">
+            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-[0_12px_30px_rgba(0,0,0,0.03)]">
+                <div class="p-5 space-y-4">
+                    <template x-if="cart.length === 0">
+                        <div class="text-center py-12">
+                            <span class="text-4xl block mb-3">📥</span>
+                            <p class="text-gray-400 text-xs font-medium">Ваша корзина пока пуста</p>
+                            <button @click="currentTab = 'catalog'" class="mt-4 inline-block text-[11px] bg-[#D4AF37] hover:bg-[#C5A028] text-white px-4 py-2 rounded-xl font-bold tracking-tight transition-colors">Назад в каталог</button>
+                        </div>
+                    </template>
+                    
+                    <template x-for="item in cart" :key="item.product.id">
+                        <div class="flex items-center justify-between border-b border-gray-50 pb-3.5 last:border-0 last:pb-0 select-none">
+                            <div class="flex-1 pr-3">
+                                <h4 class="font-bold text-xs text-[#1A1A1A] tracking-tight leading-tight" x-text="item.product.name"></h4>
+                                <p class="text-xs text-[#D4AF37] font-bold mt-1" x-text="formatPrice(item.product.price)"></p>
+                            </div>
+                            <div class="flex items-center gap-2.5 bg-[#F1F3F5] p-1 rounded-lg">
+                                <button @click="updateQuantity(item.product.id, -1)" class="w-6 h-6 rounded-md bg-white flex items-center justify-center text-[#1A1A1A] font-bold text-xs shadow-xs active:scale-95">-</button>
+                                <span class="w-4 text-center text-xs font-bold text-[#1A1A1A]" x-text="item.quantity"></span>
+                                <button @click="updateQuantity(item.product.id, 1)" class="w-6 h-6 rounded-md bg-white flex items-center justify-center text-[#1A1A1A] font-bold text-xs shadow-xs active:scale-95">+</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="border-t border-gray-100 p-5 bg-white" x-show="cart.length > 0">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Итого к заказу:</span>
+                        <span class="text-lg font-black text-[#D4AF37]" x-text="formatPrice(cartTotal())"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">Формируемый чек для Telegram:</label>
+                        <pre class="bg-gray-50 p-3 border border-gray-100 rounded-xl text-[11px] font-mono text-gray-500 whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto" x-text="generateCartText()"></pre>
+                    </div>
+                    <button @click="copyToClipboard()" class="w-full bg-[#D4AF37] hover:bg-[#C5A028] text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.99] flex items-center justify-center gap-2 text-xs shadow-xs">
+                        <span x-text="copyStatus"></span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модалка (Lightbox) -->
+    <div x-show="isLightboxOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;" x-transition>
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="isLightboxOpen = false"></div>
+        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-xl border border-gray-100 relative z-10 transition-all">
+            <button @click="isLightboxOpen = false" class="absolute top-3 right-3 w-7 h-7 rounded-full bg-gray-100 text-[#1A1A1A] flex items-center justify-center text-sm font-bold z-20">&times;</button>
+            <div class="w-full aspect-square bg-[#F8F9FA] flex items-center justify-center border-b border-gray-100 overflow-hidden">
+                <template x-if="isImageFile(selectedProduct?.image)">
+                    <img :src="selectedProduct.image" :alt="selectedProduct.name" class="w-full h-full object-cover">
+                </template>
+                <template x-if="!isImageFile(selectedProduct?.image)">
+                    <span class="text-7xl select-none drop-shadow-xs" x-text="selectedProduct?.image"></span>
+                </template>
+            </div>
+            <div class="p-5 bg-white">
+                <h3 class="text-base font-black text-[#1A1A1A] tracking-tight mb-1" x-text="selectedProduct?.name"></h3>
+                <span class="inline-block bg-gray-100 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded-sm mb-3" x-text="'Размер: ' + selectedProduct?.sizeLabel"></span>
+                <p class="text-xs text-gray-400 mb-4 leading-relaxed" x-text="selectedProduct?.description || 'Премиум упаковка от производителя.'"></p>
+                <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <span class="text-base font-black text-[#D4AF37]" x-text="formatPrice(selectedProduct?.price || 0)"></span>
+                    <button @click="addToCart(selectedProduct); isLightboxOpen = false" class="bg-[#D4AF37] hover:bg-[#C5A028] text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors">
+                        🛒 В корзину
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="fixed bottom-0 inset-x-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.015)]">
+        <div class="max-w-md mx-auto px-4 py-2 flex justify-between items-center text-center gap-1">
+            <button @click="currentTab = 'catalog'" :class="currentTab === 'catalog' ? 'text-[#D4AF37] font-bold' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition-all flex-1 py-1.5 select-none active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                <span class="text-[9px] uppercase tracking-wider font-semibold">Каталог</span>
+            </button>
+            <button @click="currentTab = 'categories'" :class="currentTab === 'categories' ? 'text-[#D4AF37] font-bold' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition-all flex-1 py-1.5 select-none active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <span class="text-[9px] uppercase tracking-wider font-semibold">Разделы</span>
+            </button>
+            <button @click="currentTab = 'search'" :class="currentTab === 'search' ? 'text-[#D4AF37] font-bold' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition-all flex-1 py-1.5 select-none active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <span class="text-[9px] uppercase tracking-wider font-semibold">Поиск</span>
+            </button>
+            <button @click="currentTab = 'cart'" :class="currentTab === 'cart' ? 'text-[#D4AF37] font-bold' : 'text-gray-400'" class="relative flex flex-col items-center justify-center gap-1 py-1.5 transition-all flex-1 select-none active:scale-95">
+                <div class="relative">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    <span x-show="cartCount() > 0" x-text="cartCount()" class="absolute -top-1.5 -right-2 text-[8px] bg-[#D4AF37] text-white w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold"></span>
+                </div>
+                <span class="text-[9px] uppercase tracking-wider font-semibold" x-text="cartCount() > 0 && currentTab !== 'cart' ? formatPrice(cartTotal()) : 'Корзина'"></span>
+            </button>
+        </div>
+    </div>
 </body>
 </html>
